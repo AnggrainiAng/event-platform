@@ -38,7 +38,7 @@ const NavbarComp = () => {
     };
     keepLogin();
   }, []);
-
+  
   useEffect(() => {
     const handleScroll = () => {
       const position = window.scrollY;
