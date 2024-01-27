@@ -28,12 +28,12 @@ model User {
   updatedAt      DateTime        @updatedAt
   isDeleted      Boolean         @default(false)
   CouponDiscount CouponDiscount?
+  points         ReferralPoints?
   Event          Event[]
   Transaction    Transaction[]
   UserReward     UserReward[]
   UserVoucher    UserVoucher[]
   Voucher        Voucher[]
-  points         ReferralPoints?
   role           Role?
 }
 
