@@ -7,7 +7,6 @@ export const createPointReferral = async (data: IReferralPoints) => {
     const result = await prisma.referralPoints.create({
       data: {
         userId,
-
         pointEarned,
         expiresOn,
       },
