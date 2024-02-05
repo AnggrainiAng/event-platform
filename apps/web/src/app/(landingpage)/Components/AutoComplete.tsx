@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation';
 const AutoComplete = ({ event }: any) => {
   const router = useRouter();
   const params = useParams();
-  console.log('dobounceeeeeeeee', event);
 
   const options = event.map((event: any) => {
     return { value: event.id, label: event.title };

@@ -3,11 +3,11 @@ import prisma from '@/prisma';
 export const getAllEvent = async () => {
   try {
     const events = await prisma.event.findMany({
-      where: {
-        startDate: {
-          gte: new Date(),
-        },
-      },
+      // where: {
+      //   startDate: {
+      //     gte: new Date(),
+      //   },
+      // },
       include: {
         location: true,
         user: {

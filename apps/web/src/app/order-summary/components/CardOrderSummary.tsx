@@ -1,5 +1,6 @@
 'use client';
 
+import { CustomerGuard } from '@/lib/HOC/CustomerGuard';
 import { baseUrl } from '@/lib/baseUrl';
 import { useAppSelector } from '@/lib/hooks';
 import axios from 'axios';
@@ -24,6 +25,7 @@ const CardOrderSummary = () => {
     { id: 2, name: 'Full Price', price: 1000000, discount: 10000, quantity: 1 },
   ]);
   const [usePoints, setUsePoints] = useState(false);
+  const [showNoPointsMessage, setShowNoPointsMessage] = useState(false);
   const [points, setPoints] = useState(50000); // Assuming the customer has 50,000 points
 
   const onCloseModal = () => {
@@ -42,6 +44,7 @@ const CardOrderSummary = () => {
     // Recalculate total if needed
   };
   const [point, setPoint] = useState(0);
+
   const handleUsePointsChange = async () => {
     const { data } = await axios.get(baseUrl + `/reward/points/${selector.id}`);
     setPoint(data.data.pointEarned);
@@ -132,4 +135,4 @@ const CardOrderSummary = () => {
   );
 };
 
-export default CardOrderSummary;
+export default CustomerGuard(CardOrderSummary);

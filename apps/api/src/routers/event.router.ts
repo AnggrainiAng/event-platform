@@ -14,6 +14,7 @@ export class EventRouter {
   private intializeRoutes(): void {
     this.router.get('/events', this.eventController.getAllEvent);
     this.router.get('/event/:id', this.eventController.getEventId);
+    this.router.get('/filter/:userId', this.eventController.getEventByUserId);
     this.router.get(
       '/events-thisweekend',
       this.eventController.getEventInThisWeek,

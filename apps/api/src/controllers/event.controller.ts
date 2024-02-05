@@ -1,5 +1,6 @@
 import { getAllEventAction } from '@/actions/event/getAllEventAction';
 import { getEventByIdAction } from '@/actions/event/getEventByIdAction';
+import { getEventByUserIdAction } from '@/actions/event/getEventByUserId.action';
 import { getThisEventDiscoveryAction } from '@/actions/event/getEventDiscoveryAction';
 import { getThisEventsAction } from '@/actions/event/getThisEventAction';
 import { NextFunction, Request, Response } from 'express';
@@ -45,6 +46,17 @@ export class EventController {
       const events = await getEventByIdAction(Number(id));
 
       return res.status(events?.status).send(events);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getEventByUserId(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.params.userId;
+      const result = await getEventByUserIdAction(Number(userId));
+
+      res.status(result.status).send(result);
     } catch (error) {
       next(error);
     }

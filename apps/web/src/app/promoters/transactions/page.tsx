@@ -1,106 +1,198 @@
 'use client';
 import SidebarPromoter from '../components/SidebarPromoter';
-import { FaSearch } from 'react-icons/fa';
-import { Button, Modal, Table } from 'flowbite-react';
-import { useState } from 'react';
-import { HiOutlineExclamationCircle } from 'react-icons/hi';
+import { Button, Table } from 'flowbite-react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { baseUrl } from '@/lib/baseUrl';
+import { useAppSelector } from '@/lib/hooks';
+import ModalAccept from './ModalAccept';
+import ModalDecline from './ModalDecline';
+import ModalProofOfPayment from './ModalProofOfPayment';
+
+interface IStatus {
+  id: number;
+  title: string;
+  createdAt: Date;
+}
+
+interface IData {
+  uuid: string;
+  eventId: number;
+  qty: number;
+}
+
+interface IUser {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  role: IRole;
+  createdAt: Date;
+  updatedAt: Date;
+  isDeleted: boolean;
+  referralCode: string;
+}
+
+interface IRole {
+  id: number;
+  userId: number;
+  name: string;
+}
+interface IEvent {
+  id: number;
+  title: string;
+  description: string;
+  locationId: number;
+  startDate: Date;
+  endDate: Date;
+  price: number;
+  limit: number;
+  booked: number;
+  thumbnail: string;
+  userId: number;
+  createdAt: Date;
+  updateAt: Date;
+}
+
+export interface ITransaction {
+  id: number;
+  uuid: string;
+  userId: number;
+  eventId: number;
+  statusId: number;
+  qty: number;
+  paymentImg: string;
+  total: number;
+  pointsUsed: number;
+  createdAt: Date;
+  updaetAt: Date;
+  status: IStatus;
+  user: IUser;
+  event: IEvent;
+}
 
 const Transactions = () => {
-  const [transactions, setTransactions] = useState([
-    {
-      id: 52,
-      customer: 'Anggi',
-      event: 'Taylor Swift Concert',
-      quantity: 1,
-      total: '$422',
-      status: 'Transaction Success',
-    },
-    {
-      id: 53,
-      customer: 'Budi',
-      event: 'Ed Sheeran Concert',
-      quantity: 2,
-      total: '$800',
-      status: 'Waiting Admin Confirmation',
-    },
-    {
-      id: 54,
-      customer: 'Citra',
-      event: 'Coldplay Concert',
-      quantity: 1,
-      total: '$399',
-      status: 'Waiting Payment',
-    },
-    {
-      id: 55,
-      customer: 'Dewi',
-      event: 'The Weeknd Concert',
-      quantity: 1,
-      total: '$499',
-      status: 'Cancelled Transaction)',
-    },
-    {
-      id: 56,
-      customer: 'Eko',
-      event: 'K-Pop Festival',
-      quantity: 3,
-      total: '$1200',
-      status: 'Expired Transaction',
-    },
-    {
-      id: 57,
-      customer: 'Fina',
-      event: 'Rock in Rio',
-      quantity: 2,
-      total: '$850',
-      status: 'Rejected Transaction',
-    },
-  ]);
+  // const [transactions, setTransactions] = useState([
+  //   {
+  //     id: 52,
+  //     customer: 'Anggi',
+  //     event: 'Taylor Swift Concert',
+  //     quantity: 1,
+  //     total: '$422',
+  //     status: 'Transaction Success',
+  //   },
+  //   {
+  //     id: 53,
+  //     customer: 'Budi',
+  //     event: 'Ed Sheeran Concert',
+  //     quantity: 2,
+  //     total: '$800',
+  //     status: 'Waiting Admin Confirmation',
+  //   },
+  //   {
+  //     id: 54,
+  //     customer: 'Citra',
+  //     event: 'Coldplay Concert',
+  //     quantity: 1,
+  //     total: '$399',
+  //     status: 'Waiting Payment',
+  //   },
+  //   {
+  //     id: 55,
+  //     customer: 'Dewi',
+  //     event: 'The Weeknd Concert',
+  //     quantity: 1,
+  //     total: '$499',
+  //     status: 'Cancelled Transaction)',
+  //   },
+  //   {
+  //     id: 56,
+  //     customer: 'Eko',
+  //     event: 'K-Pop Festival',
+  //     quantity: 3,
+  //     total: '$1200',
+  //     status: 'Expired Transaction',
+  //   },
+  //   {
+  //     id: 57,
+  //     customer: 'Fina',
+  //     event: 'Rock in Rio',
+  //     quantity: 2,
+  //     total: '$850',
+  //     status: 'Rejected Transaction',
+  //   },
+  // ]);
 
   const [openModal, setOpenModal] = useState(false);
-  const [modalAction, setModalAction] = useState<string>('');
+  const selector = useAppSelector((state) => state.user);
+  const [transactions, setTransaction] = useState<ITransaction[]>();
+  const [image, setImage] = useState('');
+  const [modalDecline, setModalDecline] = useState(false);
+  const [modalAccept, setModalAccept] = useState(false);
+  const [modalProof, setModalProof] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState(null);
 
   const handleAccept = (transactionId: any) => {
     setSelectedTransactionId(transactionId);
-    setModalAction('accept');
-    setOpenModal(true);
+    setModalAccept(true);
   };
-
   const handleDecline = (transactionId: any) => {
     setSelectedTransactionId(transactionId);
-    setModalAction('decline');
-    setOpenModal(true);
+    setModalDecline(true);
   };
 
-  const confirmDecline = () => {
-    console.log('Declined transaction', selectedTransactionId);
-    // Update the transactions state with the declined transaction
-    setTransactions((currentTransactions) =>
-      currentTransactions.map((transaction) =>
-        transaction.id === selectedTransactionId
-          ? { ...transaction, status: 'Rejected Transaction' }
-          : transaction,
-      ),
-    );
-    setOpenModal(false);
+  useEffect(() => {
+    if (selector.id) {
+      handleGetTransaction();
+    }
+  }, [selector.id]);
+
+  const handleGetTransaction = async () => {
+    try {
+      const { data } = await axios.get(
+        baseUrl + '/transactions/filter/' + selector.id,
+      );
+      setTransaction(data.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const confirmAccept = () => {
-    console.log('Declined transaction', selectedTransactionId);
-    // Update the transactions state with the declined transaction
-    setTransactions((currentTransactions) =>
-      currentTransactions.map((transaction) =>
-        transaction.id === selectedTransactionId
-          ? { ...transaction, status: 'Transaction Success' }
-          : transaction,
-      ),
-    );
-    setOpenModal(false);
+  const handleImage = (image: string) => {
+    setModalProof(true);
+    setImage(image);
   };
+
+  // const confirmDecline = () => {
+  //   console.log('Declined transaction', selectedTransactionId);
+  //   // Update the transactions state with the declined transaction
+  //   setTransactions((currentTransactions) =>
+  //     currentTransactions.map((transaction) =>
+  //       transaction.id === selectedTransactionId
+  //         ? { ...transaction, status: 'Rejected Transaction' }
+  //         : transaction,
+  //     ),
+  //   );
+  //   setOpenModal(false);
+  // };
+
+  // const confirmAccept = () => {
+  //   console.log('Declined transaction', selectedTransactionId);
+  //   // Update the transactions state with the declined transaction
+  //   setTransactions((currentTransactions) =>
+  //     currentTransactions.map((transaction) =>
+  //       transaction.id === selectedTransactionId
+  //         ? { ...transaction, status: 'Transaction Success' }
+  //         : transaction,
+  //     ),
+  //   );
+  //   setOpenModal(false);
+  // };
   // Determine if the Accept and Decline buttons should be displayed for a transaction
-  const shouldShowActions = (status: string) => {
-    return ['Waiting Admin Confirmation'].includes(status);
+
+  const shouldShowActions = (status: number) => {
+    return [1, 2].includes(status);
   };
 
   return (
@@ -110,28 +202,6 @@ const Transactions = () => {
         <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold mb-6 leading-tight">
           Transactions
         </h1>
-        <div className="mt-4 flex mb-10">
-          <div className="flex-1">
-            <label htmlFor="search-transactions" className="sr-only">
-              Search transactions
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch
-                  className="h-5 w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-              </div>
-              <input
-                type="text"
-                name="search-transactions"
-                id="search-transactions"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="Search for transactions"
-              />
-            </div>
-          </div>
-        </div>
 
         <div className="overflow-x-auto">
           <Table hoverable>
@@ -147,7 +217,7 @@ const Transactions = () => {
               </Table.HeadCell>
             </Table.Head>
             <Table.Body className="divide-y">
-              {transactions.map((transaction) => (
+              {transactions?.map((transaction: ITransaction) => (
                 <Table.Row
                   key={transaction.id}
                   className="bg-white dark:border-gray-700 dark:bg-gray-800"
@@ -155,16 +225,21 @@ const Transactions = () => {
                   <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                     {transaction.id}
                   </Table.Cell>
-                  <Table.Cell>{transaction.customer}</Table.Cell>
-                  <Table.Cell>{transaction.event}</Table.Cell>
-                  <Table.Cell>{transaction.quantity}</Table.Cell>
-                  <Table.Cell>{transaction.total}</Table.Cell>
-                  <Table.Cell>{transaction.status}</Table.Cell>
+                  <Table.Cell>
+                    {transaction?.user?.firstName} {transaction?.user?.lastName}
+                  </Table.Cell>
+                  <Table.Cell>{transaction?.event?.title}</Table.Cell>
+                  <Table.Cell>{transaction?.qty}</Table.Cell>
+                  <Table.Cell>{transaction?.total}</Table.Cell>
+                  <Table.Cell>{transaction?.status.title}</Table.Cell>
                   <Table.Cell className="flex justify-between">
-                    <Button className="font-medium hover:underline ">
+                    <Button
+                      className="font-medium hover:underline "
+                      onClick={() => handleImage(transaction.paymentImg || '')}
+                    >
                       View
                     </Button>
-                    {shouldShowActions(transaction.status) && (
+                    {shouldShowActions(transaction.status.id) && (
                       <>
                         <Button
                           className="font-medium hover:underline "
@@ -188,41 +263,28 @@ const Transactions = () => {
           </Table>
         </div>
       </div>
-      {openModal && (
-        <Modal
-          show={openModal}
-          size="md"
-          onClose={() => setOpenModal(false)}
-          popup
-        >
-          <Modal.Header />
-          <Modal.Body>
-            <div className="text-center">
-              <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-              <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                {modalAction === 'accept'
-                  ? 'Are you sure you want to accept this transaction?'
-                  : 'Are you sure you want to decline this transaction?'}
-              </h3>
-              <div className="flex justify-center gap-4">
-                <Button
-                  color={modalAction === 'accept' ? 'success' : 'failure'}
-                  onClick={
-                    modalAction === 'accept' ? confirmAccept : confirmDecline
-                  }
-                >
-                  {"Yes, I'm sure"}
-                </Button>
-                <Button color="gray" onClick={() => setOpenModal(false)}>
-                  No, cancel
-                </Button>
-              </div>
-            </div>
-          </Modal.Body>
-        </Modal>
-      )}
+      <ModalProofOfPayment
+        openModal={modalProof}
+        setOpenModal={setModalProof}
+        image={image}
+      />
+      <ModalAccept
+        openModal={modalAccept}
+        setOpenModal={setModalAccept}
+        selectedTransactionId={selectedTransactionId}
+        refreshData={handleGetTransaction}
+      />
+      <ModalDecline
+        openModal={modalDecline}
+        setOpenModal={setModalDecline}
+        selectedTransactionId={selectedTransactionId}
+        refreshData={handleGetTransaction}
+      />
     </div>
   );
 };
 
 export default Transactions;
+
+
+

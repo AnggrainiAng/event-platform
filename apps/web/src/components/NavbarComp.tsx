@@ -31,6 +31,7 @@ const NavbarComp = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        
         dispatch(loginAction(data.data));
       } catch (error) {
         console.log(error);
@@ -38,6 +39,7 @@ const NavbarComp = () => {
     };
     keepLogin();
   }, []);
+
 
   useEffect(() => {
     const handleScroll = () => {

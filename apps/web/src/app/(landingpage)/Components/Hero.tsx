@@ -1,8 +1,6 @@
 import { Button } from 'flowbite-react';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
-import { FiSearch } from 'react-icons/fi';
-import AutoComplete from './AutoComplete';
 import axios from 'axios';
 import { baseUrl } from '@/app/utils/baseUrl';
 
@@ -12,7 +10,6 @@ const Hero = () => {
     try {
       const reponse = await axios.get(`${baseUrl}/events/events`);
       setEvents(reponse.data.data);
-      console.log('dataaa', reponse.data);
     } catch (error) {
       console.log(error);
     }
@@ -53,7 +50,6 @@ const Hero = () => {
               From iconic attractions to amazing experience, what will you book
               next?
             </h2>
-            {/* <AutoComplete event={events} /> */}
           </div>
         </div>
       </div>
